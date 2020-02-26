@@ -230,9 +230,6 @@ class SlideToActView @JvmOverloads constructor(
     /** Private flag to check if the slide gesture have been completed */
     private var mIsCompleted = false
 
-    /** Private flag to check if the slider can show success */
-    private var mTickSuccess = true
-
     /** Public flag to lock the slider */
     var isLocked = false
 
@@ -349,8 +346,6 @@ class SlideToActView @JvmOverloads constructor(
                         R.styleable.SlideToActView_slider_icon, R.drawable.slidetoact_ic_arrow
                 )
 
-                setDrawableResult(mTickSuccess)
-
                 // For icon color. check if the `slide_icon_color` is set.
                 // if not check if the `outer_color` is set.
                 // if not, default to defaultOuter.
@@ -389,6 +384,7 @@ class SlideToActView @JvmOverloads constructor(
 
         mDrawableArrow = parseVectorDrawableCompat(context.resources, mIcon, context.theme)
 
+        setDrawableResult(true)
         mTextPaint.textAlign = Paint.Align.CENTER
 
         outerColor = actualOuterColor
@@ -404,7 +400,7 @@ class SlideToActView @JvmOverloads constructor(
     }
 
     private fun setDrawableResult(success: Boolean) {
-        val drawable = if (success) R.drawable.slidetoact_animated_ic_check else R.drawable.slidetoact_animated_ic_check
+        val drawable = if (success) R.drawable.slidetoact_animated_ic_check else R.drawable.slidetoact_animated_ic_cross
 
         // Due to bug in the AVD implementation in the support library, we use it only for API < 21
         mDrawableTick = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -471,9 +467,6 @@ class SlideToActView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas == null) return
-
-        outerColor = if (mTickSuccess) successColor else errorColor
-        setDrawableResult(mTickSuccess)
 
         // Outer area
         mOuterRect.set(
@@ -763,7 +756,8 @@ class SlideToActView @JvmOverloads constructor(
      */
     fun completeSlider(success: Boolean) {
         if (!mIsCompleted) {
-            mTickSuccess = success
+            setDrawableResult(success)
+            outerColor = if (success) successColor else errorColor
             startAnimationComplete()
         }
     }

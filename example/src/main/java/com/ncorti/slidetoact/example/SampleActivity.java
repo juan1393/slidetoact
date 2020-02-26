@@ -151,7 +151,7 @@ public class SampleActivity extends AppCompatActivity {
                         handler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
-                                slide.completeSlider(true);
+                                slide.completeSlider(false);
                             }
                         }, 1000);
 

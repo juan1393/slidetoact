@@ -119,6 +119,9 @@ class SlideToActView @JvmOverloads constructor(
             invalidate()
         }
 
+    var successColor: Int = 0
+    var errorColor: Int = 0
+
     /** Duration of the complete and reset animation (in milliseconds). */
     var animDuration: Long = 300
 
@@ -227,6 +230,9 @@ class SlideToActView @JvmOverloads constructor(
     /** Private flag to check if the slide gesture have been completed */
     private var mIsCompleted = false
 
+    /** Private flag to check if the slider can show success */
+    private var mTickSuccess = true
+
     /** Public flag to lock the slider */
     var isLocked = false
 
@@ -248,12 +254,14 @@ class SlideToActView @JvmOverloads constructor(
     /** Public Slide event listeners */
     var onSlideToActAnimationEventListener: OnSlideToActAnimationEventListener? = null
     var onSlideCompleteListener: OnSlideCompleteListener? = null
+    var onSlideResultListener: OnSlideResultListener? = null
     var onSlideResetListener: OnSlideResetListener? = null
     var onSlideUserFailedListener: OnSlideUserFailedListener? = null
 
     init {
         val actualOuterColor: Int
         val actualInnerColor: Int
+        val actualErrorColor: Int
         val actualTextColor: Int
         val actualIconColor: Int
 
@@ -282,6 +290,9 @@ class SlideToActView @JvmOverloads constructor(
             val defaultWhite = ContextCompat.getColor(
                 this.context, R.color.slidetoact_white
             )
+            val defaultRed = ContextCompat.getColor(
+                    this.context, R.color.slidetoact_red
+            )
 
             with(attrs) {
                 mDesiredSliderHeight = getDimensionPixelSize(
@@ -292,6 +303,7 @@ class SlideToActView @JvmOverloads constructor(
 
                 actualOuterColor = getColor(R.styleable.SlideToActView_outer_color, defaultOuter)
                 actualInnerColor = getColor(R.styleable.SlideToActView_inner_color, defaultWhite)
+                actualErrorColor = getColor(R.styleable.SlideToActView_error_color, defaultRed)
 
                 // For text color, check if the `text_color` is set.
                 // if not check if the `outer_color` is set.
@@ -378,13 +390,13 @@ class SlideToActView @JvmOverloads constructor(
         // Due to bug in the AVD implementation in the support library, we use it only for API < 21
         mDrawableTick = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             context.resources.getDrawable(
-                R.drawable.slidetoact_animated_ic_check,
-                context.theme
+                    R.drawable.slidetoact_animated_ic_check,
+                    context.theme
             ) as AnimatedVectorDrawable
         } else {
             AnimatedVectorDrawableCompat.create(
-                context,
-                R.drawable.slidetoact_animated_ic_check
+                    context,
+                    R.drawable.slidetoact_animated_ic_check
             )!!
         }
 
@@ -392,6 +404,8 @@ class SlideToActView @JvmOverloads constructor(
 
         outerColor = actualOuterColor
         innerColor = actualInnerColor
+        successColor = actualOuterColor
+        errorColor = actualErrorColor
         iconColor = actualIconColor
 
         // This outline provider force removal of shadow
@@ -451,6 +465,8 @@ class SlideToActView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         if (canvas == null) return
+
+        outerColor = if(mTickSuccess) successColor else errorColor
 
         // Outer area
         mOuterRect.set(
@@ -572,7 +588,7 @@ class SlideToActView @JvmOverloads constructor(
                         positionAnimator.start()
                     } else if (mPosition > 0 && mPositionPerc >= mGraceValue) {
                         isEnabled = false // Fully disable touch events
-                        startAnimationComplete()
+                        onSlideResultListener?.onSlideResult(this)
                     } else if (mFlagMoving && mPosition == 0) {
                         // mFlagMoving == true means user successfully grabbed the slider,
                         // but mPosition == 0 means that the slider is released at the beginning
@@ -953,6 +969,18 @@ class SlideToActView @JvmOverloads constructor(
          * @param view The SlideToActView who created the event
          */
         fun onSlideComplete(view: SlideToActView)
+    }
+
+    /**
+     * Event handler for the tick animation complete event.
+     * Use this handler to react to the tick animation complete event
+     */
+    interface OnSlideResultListener {
+        /**
+         * Called when user performed the slide and it finishes the tick animation
+         * @param view The SlideToActView who created the event
+         */
+        fun onSlideResult(view: SlideToActView)
     }
 
     /**

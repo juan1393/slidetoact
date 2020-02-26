@@ -1,6 +1,7 @@
 package com.ncorti.slidetoact.example;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -136,6 +137,29 @@ public class SampleActivity extends AppCompatActivity {
                 log.append("\n" + getTime() + " onSlideUserFailed - Clicked outside: " + isOutside);
             }
         });
+
+        slide.setOnSlideResultListener(new SlideToActView.OnSlideResultListener() {
+            @Override
+            public void onSlideResult(@NonNull SlideToActView view) {
+                log.append("\n" + getTime() + " onSlideResult ");
+
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        final Handler handler = new Handler();
+                        handler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                slide.completeSlider(true);
+                            }
+                        }, 1000);
+
+                    }
+                });
+            }
+        });
+
         slide.setOnSlideToActAnimationEventListener(new SlideToActView.OnSlideToActAnimationEventListener() {
             @Override
             public void onSlideCompleteAnimationStarted(@NonNull SlideToActView view, float threshold) {
